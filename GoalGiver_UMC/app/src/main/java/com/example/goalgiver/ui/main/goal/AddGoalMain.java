@@ -32,6 +32,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.goalgiver.KakaoLoginTokenManager;
 import com.example.goalgiver.R;
 import com.example.goalgiver.ui.main.goal.AddGaolMap;
 import com.example.goalgiver.ui.main.people.FriendItem;
@@ -41,11 +42,22 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class AddGoalMain extends AppCompatActivity {
     private static final int TEAM_CHOOSE_REQUEST = 7;
@@ -339,6 +351,7 @@ public class AddGoalMain extends AppCompatActivity {
                 Log.d("AddGoalMain", "Sending goalItem: $goalItem");
                 setResult(Activity.RESULT_OK, resultIntent);
 
+                sendPostRequest();
                 finish();
             }
         });
@@ -1047,6 +1060,79 @@ public class AddGoalMain extends AppCompatActivity {
         bottomSheetDialog.show();
     }
 
+    private static final OkHttpClient client = new OkHttpClient();
+
+    private void sendPostRequest() {
+        // JSON 객체 생성
+        JSONObject json = new JSONObject();
+        try {
+            json.put("title", "목표추가 테스트");
+            json.put("description", "테스트");
+            json.put("startDate", "2024-08-29");
+            json.put("endDate", "2024-08-31");
+            json.put("type", "personal");
+            json.put("validationType", "photo");
+            json.put("latitude", 37.5665);
+            json.put("longitude", 126.9780);
+            json.put("emoji", "💪");
+            json.put("donationOrganizationId", 1);
+            json.put("donationAmount", 1000);
+            json.put("repeatType", "daily");
+            json.put("intervalOfDays", 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // MediaType 설정
+        MediaType JSON = MediaType.get("application/json; charset=utf-8");
+
+        // RequestBody 생성
+        RequestBody requestBody = RequestBody.create(json.toString(), JSON);
+
+        // Request 객체 생성
+        Request request = new Request.Builder()
+                .url("http://goalgiverr-env.eba-2ff2eph3.ap-northeast-2.elasticbeanstalk.com" + "/goals") // API 엔드포인트
+                .addHeader("Authorization", "Bearer " + KakaoLoginTokenManager.INSTANCE.readAccessToken())
+                .post(requestBody)
+                .build();
+
+        // API 호출 및 응답 처리
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace(); // 요청 실패 시 처리
+
+                // UI 스레드에서 토스트 메시지 표시
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d("PostAPI", "API 요청 실패");
+                        //Toast.makeText(MainActivity.this, "API 요청 실패", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                // 응답 데이터 처리
+                String responseData = response.body().string();
+                System.out.println(responseData);
+
+                // UI 스레드에서 응답 결과를 토스트로 표시
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d("PostAPI", "API 요청 성공");
+                        //Toast.makeText(MainActivity.this, "API 요청 성공", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+    }
 
 
 }

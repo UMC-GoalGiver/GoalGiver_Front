@@ -14,6 +14,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
+import com.example.goalgiver.KakaoLoginTokenManager
 import com.example.goalgiver.R
 import com.example.goalgiver.databinding.FragmentLoginBinding
 import com.example.goalgiver.ui.certification.MapCertificationActivity.Companion.TAG
@@ -56,6 +57,8 @@ class LoginFragment : Fragment() {
             Log.e(TAG, "카카오계정으로 로그인 실패", error)
         } else if (token != null) {
             Log.i(TAG, "카카오계정으로 로그인 성공 ${token.accessToken}")
+            KakaoLoginTokenManager.updateAccessToken(token.accessToken)
+            Log.d("valcallbacktoken", "${KakaoLoginTokenManager.readAccessToken()}")
             GoMain()
         }
     }
@@ -103,6 +106,8 @@ class LoginFragment : Fragment() {
                         UserApiClient.instance.loginWithKakaoAccount(requireContext(), callback = callback)
                     } else if (token != null) {
                         Log.i(TAG, "카카오톡으로 로그인 성공 ${token.accessToken}")
+                        KakaoLoginTokenManager.updateAccessToken(token.accessToken)
+                        Log.d("btnClicktoken", "${KakaoLoginTokenManager.readAccessToken()}")
                         GoMain()
                     }
                 }
@@ -112,35 +117,35 @@ class LoginFragment : Fragment() {
         }
     }
 
-    private fun startKakaoLogin() {
-        val client = OkHttpClient.Builder()
-            .followRedirects(false)
-            .followSslRedirects(false)
-            .build()
-
-        val request = Request.Builder()
-            .url(BASE_URL+"/api/auth/login/kakao")
-            .get()
-            .build()
-
-        try {
-            val response: Response = client.newCall(request).execute()
-
-            if (response.isRedirect) {
-                val redirectUrl = response.header("Location")
-                println("리디렉션. $redirectUrl")
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(redirectUrl))
-                startActivity(intent)
-            } else if (response.isSuccessful) {
-                println("성공: ${response.code}")
-            } else {
-                println("실패: ${response.code}")
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            println("예외")
-        }
-    }
+//    private fun startKakaoLogin() {
+//        val client = OkHttpClient.Builder()
+//            .followRedirects(false)
+//            .followSslRedirects(false)
+//            .build()
+//
+//        val request = Request.Builder()
+//            .url(BASE_URL+"/api/auth/login/kakao")
+//            .get()
+//            .build()
+//
+//        try {
+//            val response: Response = client.newCall(request).execute()
+//
+//            if (response.isRedirect) {
+//                val redirectUrl = response.header("Location")
+//                println("리디렉션. $redirectUrl")
+//                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(redirectUrl))
+//                startActivity(intent)
+//            } else if (response.isSuccessful) {
+//                println("성공: ${response.code}")
+//            } else {
+//                println("실패: ${response.code}")
+//            }
+//        } catch (e: IOException) {
+//            e.printStackTrace()
+//            println("예외")
+//        }
+//    }
 
 //    private fun startKakaoLogin() {
 //        val authUrl = "https://kauth.kakao.com/oauth/authorize" +
